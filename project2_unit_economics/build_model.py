@@ -1,7 +1,4 @@
-"""
-Финансовая модель: Unit Economics + сценарный P&L для EdTech-подписочного продукта.
-Использует openpyxl, все расчёты — формулами (не хардкод), с recalc.py после сохранения.
-"""
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
