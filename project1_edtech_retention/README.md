@@ -11,7 +11,7 @@
 
 | Файл | Назначение |
 |---|---|
-| `generate_data.py` | Генерация синтетического датасета (users, engagement) |
+| `generate_data.py` | Датасет (users, engagement) |
 | `sql_queries.sql` | 5 SQL-запросов: когортный retention, funnel drop-off (LAG), ранжирование каналов (RANK), RFM-подобная сегментация (NTILE), оконные агрегаты |
 | `run_sql.py` | Выполнение запросов через SQLite, экспорт результатов в `data/result_*.csv` |
 | `eda_analysis.py` | EDA + статистические тесты (chi-square, Welch t-test), построение графиков |
