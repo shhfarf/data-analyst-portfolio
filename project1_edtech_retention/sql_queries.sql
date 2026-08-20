@@ -1,13 +1,4 @@
--- =====================================================================
--- Проект: EdTech — анализ оттока и вовлечённости
--- Диалект: PostgreSQL (совместимо со SQLite для локального запуска)
--- Таблицы: users(user_id, signup_date, acquisition_channel, device, segment, completed_course)
---          engagement(user_id, week_number, is_active, events_count)
--- =====================================================================
 
--- 1. КОГОРТНЫЙ RETENTION (по месяцу регистрации, неделя за неделей)
--- Классический когортный анализ: % пользователей когорты, оставшихся активными
--- на неделе N относительно недели 0.
 WITH cohort_size AS (
     SELECT
         strftime('%Y-%m', signup_date) AS cohort_month,
