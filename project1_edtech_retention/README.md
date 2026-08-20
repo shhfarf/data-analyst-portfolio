@@ -33,7 +33,7 @@
 Как запустить
 
 ```bash
-python3 generate_data.py   генерирует data/users.csv, data/engagement.csv
+python3 data.py          data/users.csv, data/engagement.csv
 python3 run_sql.py         выполняет SQL, сохраняет data/result_*.csv
 python3 eda_analysis.py    EDA, статтесты, графики в charts/
 затем открыть dashboard.html в браузере
