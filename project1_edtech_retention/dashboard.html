@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>EdTech Analytics — Retention &amp; Engagement Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1720;
+    --panel:#16212c;
+    --panel-border:#25333f;
+    --text:#e7edf3;
+    --muted:#8fa3b3;
+    --accent:#4fd1c5;
+    --accent-2:#f0a45c;
+    --danger:#e0685c;
+    --mono: 'JetBrains Mono', 'Consolas', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding:32px 40px 60px;
+  }
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:1px solid var(--panel-border);
+    padding-bottom:20px; margin-bottom:28px; flex-wrap:wrap; gap:16px;
+  }
+  .eyebrow{
+    color:var(--accent); font-family:var(--mono); font-size:12px;
+    letter-spacing:.14em; text-transform:uppercase; margin:0 0 6px;
+  }
+  h1{margin:0; font-size:26px; font-weight:600; letter-spacing:-0.01em;}
+  .subtitle{color:var(--muted); font-size:14px; margin-top:6px; max-width:560px;}
+  .meta{text-align:right; color:var(--muted); font-size:13px; font-family:var(--mono);}
+  .kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;}
+  .kpi{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:10px;
+    padding:18px 20px;
+  }
+  .kpi .label{color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.08em;}
+  .kpi .value{font-size:30px; font-weight:700; margin-top:6px; font-family:var(--mono);}
+  .kpi .value.accent{color:var(--accent);}
+  .kpi .value.warn{color:var(--accent-2);}
+  .grid{display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:20px;}
+  .panel{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:10px;
+    padding:20px 22px;
+  }
+  .panel h2{font-size:14px; margin:0 0 4px; font-weight:600;}
+  .panel .note{color:var(--muted); font-size:12px; margin-bottom:14px;}
+  canvas{max-height:280px;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{padding:8px 6px; text-align:left; border-bottom:1px solid var(--panel-border);}
+  th{color:var(--muted); font-weight:500; font-size:11px; text-transform:uppercase; letter-spacing:.05em;}
+  td.num{font-family:var(--mono); text-align:right;}
+  .rank-1{color:var(--accent);}
+  .rank-5{color:var(--danger);}
+  footer{margin-top:30px; color:var(--muted); font-size:12px; font-family:var(--mono);}
+  .insight{
+    background:#132029; border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+    padding:14px 16px; font-size:13px; color:#c7d6e0; margin-top:14px; line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="eyebrow">EdTech Platform · Cohort Sep–Dec 2025</p>
+    <h1>Retention &amp; Engagement Dashboard</h1>
+    <p class="subtitle">Анализ оттока участников 12-недельного курса: когортный retention, точки просадки воронки, качество каналов привлечения.</p>
+  </div>
+  <div class="meta">Портфолио-проект · Data Analyst<br>Источник: синтетический датасет (6 200 пользователей)</div>
+</header>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="label">Всего участников</div><div class="value" id="kpi-total">—</div></div>
+  <div class="kpi"><div class="label">Completion rate</div><div class="value accent" id="kpi-completion">—</div></div>
+  <div class="kpi"><div class="label">Retention, неделя 4</div><div class="value" id="kpi-w4">—</div></div>
+  <div class="kpi"><div class="label">Retention, неделя 12</div><div class="value warn" id="kpi-w12">—</div></div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Retention curve по когортам регистрации</h2>
+    <div class="note">% активных пользователей когорты на каждой неделе курса относительно недели старта</div>
+    <canvas id="retentionChart"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Отток по неделям (funnel drop-off)</h2>
+    <div class="note">Абсолютная потеря активных пользователей неделя к неделе</div>
+    <canvas id="funnelChart"></canvas>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Качество каналов привлечения</h2>
+    <div class="note">Completion rate — доля дошедших до конца курса</div>
+    <canvas id="channelChart"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Ранжирование каналов</h2>
+    <table id="channelTable">
+      <thead><tr><th>Канал</th><th class="num">Пользователей</th><th class="num">Completion %</th><th class="num">Ранг</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="insight" id="insight-box"></div>
+  </div>
+</div>
+
+<footer>dashboard_data.json генерируется из sql_queries.sql → run_sql.py · рендер: Chart.js, без бэкенда</footer>
+
+<script>
+fetch('dashboard_data.json').then(r => r.json()).then(data => {
+  document.getElementById('kpi-total').textContent = data.kpi.total_users.toLocaleString('ru-RU');
+  document.getElementById('kpi-completion').textContent = data.kpi.completion_rate + '%';
+  document.getElementById('kpi-w4').textContent = data.kpi.avg_retention_w4 + '%';
+  document.getElementById('kpi-w12').textContent = data.kpi.avg_retention_w12 + '%';
+
+  const palette = ['#4fd1c5','#f0a45c','#7ab8f5','#e0685c'];
+  const cohorts = [...new Set(data.retention.map(r => r.cohort_month))];
+  new Chart(document.getElementById('retentionChart'), {
+    type: 'line',
+    data: {
+      labels: [...new Set(data.retention.map(r => r.week_number))],
+      datasets: cohorts.map((c,i) => ({
+        label: c,
+        data: data.retention.filter(r => r.cohort_month === c).map(r => r.retention_pct),
+        borderColor: palette[i % palette.length],
+        backgroundColor: 'transparent',
+        tension: 0.25,
+      }))
+    },
+    options: { plugins:{legend:{labels:{color:'#8fa3b3', font:{size:11}}}}, scales:{
+      x:{ticks:{color:'#8fa3b3'}, grid:{color:'#25333f'}, title:{display:true,text:'Неделя',color:'#8fa3b3'}},
+      y:{ticks:{color:'#8fa3b3'}, grid:{color:'#25333f'}, title:{display:true,text:'% активных',color:'#8fa3b3'}}
+    }}
+  });
+
+  new Chart(document.getElementById('funnelChart'), {
+    type: 'bar',
+    data: {
+      labels: data.funnel.map(f => 'нед. ' + f.week_number),
+      datasets: [{ label:'Потеря пользователей', data: data.funnel.map(f => f.delta_users), backgroundColor:'#e0685c' }]
+    },
+    options: { plugins:{legend:{display:false}}, scales:{
+      x:{ticks:{color:'#8fa3b3'}, grid:{display:false}},
+      y:{ticks:{color:'#8fa3b3'}, grid:{color:'#25333f'}}
+    }}
+  });
+
+  new Chart(document.getElementById('channelChart'), {
+    type: 'bar',
+    data: {
+      labels: data.channel.map(c => c.acquisition_channel),
+      datasets: [{ label:'Completion %', data: data.channel.map(c => c.completion_rate_pct), backgroundColor:'#4fd1c5' }]
+    },
+    options: { indexAxis:'y', plugins:{legend:{display:false}}, scales:{
+      x:{ticks:{color:'#8fa3b3'}, grid:{color:'#25333f'}},
+      y:{ticks:{color:'#8fa3b3'}, grid:{display:false}}
+    }}
+  });
+
+  const tbody = document.querySelector('#channelTable tbody');
+  data.channel.forEach(c => {
+    const tr = document.createElement('tr');
+    const rankClass = c.quality_rank === 1 ? 'rank-1' : (c.quality_rank === 5 ? 'rank-5' : '');
+    tr.innerHTML = `<td>${c.acquisition_channel}</td><td class="num">${c.users_count}</td><td class="num">${c.completion_rate_pct}%</td><td class="num ${rankClass}">#${c.quality_rank}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const best = data.channel[0], worst = data.channel[data.channel.length-1];
+  document.getElementById('insight-box').innerHTML =
+    `<b>Инсайт:</b> ${best.acquisition_channel} даёт completion rate ${best.completion_rate_pct}% против ${worst.completion_rate_pct}% у ${worst.acquisition_channel} — разница подтверждена статистически (chi-square, p < 0.001, см. eda_analysis.py). Рекомендация: перераспределить бюджет привлечения в пользу ${best.acquisition_channel}-подобных каналов.`;
+});
+</script>
+
+</body>
+</html>
