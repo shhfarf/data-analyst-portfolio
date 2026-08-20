@@ -1,9 +1,4 @@
-"""
-EDA + статистический анализ: EdTech retention & engagement.
-Отвечаем на два бизнес-вопроса:
-1) Значимо ли отличается completion rate между каналами привлечения? (chi-square)
-2) Значимо ли отличается вовлечённость (events/week) между сегментами пользователей? (ANOVA/t-test)
-"""
+
 import pandas as pd
 import numpy as np
 from scipy import stats
